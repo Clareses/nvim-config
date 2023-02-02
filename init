@@ -1,0 +1,433 @@
+" ============================================================================================
+" 基础设置： Basic Setting
+
+" 使用 space 作为 leader 键
+let mapleader=" "
+
+
+syntax on
+set number
+set relativenumber
+set cursorline
+set cursorlineopt=number
+set wrap
+set showcmd
+set wildmenu
+exec "nohlsearch"
+set hlsearch
+set ignorecase
+set smartcase
+exec "nohlsearch"       
+
+
+"上下左右映射
+noremap j h
+noremap l l
+noremap k j
+noremap i k
+noremap I 5k
+noremap K 5j
+noremap J b
+noremap L w
+
+"分屏
+noremap sj :set nosplitright<CR>:vsp<CR>
+noremap sl :set splitright<CR>:vsp<CR>
+noremap si :set nosplitbelow<CR>:sp<CR>
+noremap sk :set splitbelow<CR>:sp<CR>
+
+map <LEADER>i <C-w>k
+map <LEADER>k <C-w>j
+map <LEADER>j <C-w>h
+map <LEADER>l <C-w>l
+
+map <up> :res +1<CR>
+map <down> :res -1<CR>
+map <left> :vertical resize+1<CR>
+map <right> :vertical resize-1<CR>
+
+"标签
+map tu :tabe<CR>
+map tn :+tabnext<CR>
+map ti :-tabnext<CR>
+
+"插入映射
+noremap a i
+noremap h a
+noremap A I
+noremap H A
+
+"快速保存/退出
+map s <nop>
+map S :w<CR>
+map Q :q<CR>
+map R :source $MYVIMRC<CR>
+
+"下/上一条搜索
+noremap = nzz
+noremap - Nzz
+noremap <LEADER><CR> :noh<CR>
+
+" 全选
+map <C-a> ggVG
+
+"常用设置
+filetype on                   " 文件类型检查
+filetype indent on            " 根据文件类型决定缩进
+filetype plugin on            " 根据文件类型开启插件
+set mouse=a                   " 开启鼠标
+set encoding=utf-8            " 默认编码
+let &t_ut=''
+set expandtab
+set tabstop=4
+set shiftwidth=4
+set softtabstop=4
+
+set scrolloff=5
+set tw=0
+set indentexpr=
+set backspace=indent,eol,start
+set foldmethod=indent
+set foldlevel=99
+set laststatus=2
+set autochdir
+au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+
+
+
+
+
+" ===================================================================================================
+" functions
+
+function! CheckBackspace() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
+
+" 在 leader + m 时使用
+function! ShowDocumentation()
+  if CocAction('hasProvider', 'hover')
+    call CocActionAsync('doHover')
+  else
+    call feedkeys('K', 'in')
+  endif
+endfunction
+
+" Remap for do codeAction of selected region
+function! s:cocActionsOpenFromSelected(type) abort
+  execute 'CocCommand actions.open ' . a:type
+endfunction
+
+
+" 在leader + b 时使用
+function! ShowManuel()
+    call feedkeys('K', 'in')
+endfunction
+
+
+"======================================================================================================
+" Coc.vim config
+
+" 不知道做什么用的，先注释了
+set hidden
+
+" 设置响应时间
+set updatetime=100
+" 设置短消息
+set shortmess+=c
+
+" 使用 <tab> 进行快速补全：如果 pum 可见，则 sel 变为下一个， 否则判断是否 Backspace, 是则映射到 Tab, 否则映射到刷新
+inoremap <silent><expr> <TAB>
+      \ coc#pum#visible() ? coc#pum#next(1) :
+      \ CheckBackspace() ? "\<Tab>" :
+      \ coc#refresh()
+
+" 使用 Shift + Tab 选择上一个补全： 如果pum可见，则 sel 变为上一个，否则映射到 Ctrl + h
+inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
+
+" 使用 回车 作为补全确认
+inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm()
+                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+
+" 使用 ctrl + space 作为补全触发
+inoremap <silent><expr> <c-space> coc#refresh()
+
+" 使用 Leader +/- 在警告之间跳转
+nmap <silent> <LEADER>- <Plug>(coc-diagnostic-prev)
+nmap <silent> <LEADER>= <Plug>(coc-diagnostic-next)
+
+" 跳转到定义和实现
+nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gt <Plug>(coc-type-definition)
+nmap <silent> gi <Plug>(coc-implementation)
+nmap <silent> gr <Plug>(coc-references)
+
+" 查看文档
+nnoremap <silent> <LEADER>b :call ShowManuel()<CR>
+nnoremap <silent> <LEADER>m :call ShowDocumentation()<CR>
+
+" 相同单词高亮
+autocmd CursorHold * silent call CocActionAsync('highlight')
+
+" 使用 f2 进行符号重命名
+nmap <f2> <Plug>(coc-rename)
+
+" 格式化选中代码
+augroup mygroup
+  autocmd!
+  autocmd FileType typescript,json,c,cpp setl formatexpr=CocAction('formatSelected')
+  autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
+augroup end
+
+
+" 展开 coc action
+xmap <leader>a <Plug>(coc-codeaction-selected)
+nmap <leader>a <Plug>(coc-codeaction-selected)
+
+
+
+" code actions 相关 mapping
+" 在当前光标下应用 code action
+nmap <leader>ac  <Plug>(coc-codeactionacursor)
+" 作用于整个缓冲区的 code action
+nmap <leader>as  <Plug>(coc-codeaction-source)
+" 在当前行使用最合理的 快速修复
+nmap <leader>qf  <Plug>(coc-fix-current)
+
+" 应用重构操作
+nmap <silent> <leader>re <Plug>(coc-codeaction-refactor)
+xmap <silent> <leader>r  <Plug>(coc-codeaction-refactor-selected)
+nmap <silent> <leader>r  <Plug>(coc-codeaction-refactor-selected)
+
+
+" Add (Neo)Vim's native statusline support
+" NOTE: Please see `:h coc-status` for integrations with external plugins that
+" provide custom statusline: lightline.vim, vim-airline
+set statusline^=%{coc#status()}%{get(b:,'coc_current_function','')}
+
+" 使用 <c-f> 和 <c-b> 进行 hover 翻页
+nnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
+nnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
+inoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
+inoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
+vnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
+vnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
+
+" Mappings for CoCList
+" 显示所有error
+nnoremap <silent><nowait> <space>d  :<C-u>CocList diagnostics<cr>
+" 插件管理
+nnoremap <silent><nowait> <space>e  :<C-u>CocList extensions<cr>
+" 显示所有coc指令
+nnoremap <silent><nowait> <space>c  :<C-u>CocList commands<cr>
+" 在当前文件中搜索 symbol
+nnoremap <silent><nowait> <space>o  :<C-u>CocList outline<cr>
+" 在整个工作区内搜索 symbol
+nnoremap <silent><nowait> <space>s  :<C-u>CocList -I symbols<cr>
+" 为下一个 item 执行 缺省 action
+nnoremap <silent><nowait> <space>n  :<C-u>CocNext<CR>
+" 为上一个 item 执行 缺省 action
+nnoremap <silent><nowait> <space>p  :<C-u>CocPrev<CR>
+" Resume latest coc list
+"nnoremap <silent><nowait> <space>p  :<C-u>CocListResume<CR>
+set pumblend=15
+
+"====================================================================================================
+"NERDTree Config
+map ff :NERDTreeToggle<CR>
+let NERDTreeMapActivateNode = 'o'
+let NERDTreeMapOpenExpl = ''
+let NERDTreeMapOpenSplit = 's'
+let NERDTreeMapChdir='CD'
+let NERDTreeMapCWD='cd'
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+
+
+
+" ==================================================================================================
+" IndentLine config
+let g:indentLine_color_term = 100
+
+
+" ==============================================================================================
+" Plugins 
+call plug#begin('~/.config/nvim/plugged')
+
+" Themes
+Plug 'connorholyday/vim-snazzy'
+Plug 'Mofiqul/vscode.nvim'
+Plug 'navarasu/onedark.nvim'
+Plug 'folke/tokyonight.nvim'
+
+" File Navigation
+Plug 'nvim-tree/nvim-tree.lua'
+
+" TagList
+Plug 'majutsushi/tagbar', { 'on': 'TagbarOpenAutoClose' }
+
+" Auto Completation
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+
+" identLine
+Plug 'Yggdroot/indentLine'
+
+" more highlight
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSBufToggle highlight'}
+
+" terminal
+Plug 'skywind3000/vim-terminal-help'
+
+" leap
+Plug 'ggandor/leap.nvim'
+
+" flit
+Plug 'ggandor/flit.nvim'
+
+" Lualine
+Plug 'nvim-lualine/lualine.nvim'
+
+" TabLine
+Plug 'kdheepak/tabline.nvim'
+
+call plug#end()
+
+
+
+
+" lua 脚本部分 ================================================================================================
+lua << EOF
+
+require('leap').add_default_mappings()
+require('leap').opts.highlight_unabeled_phase_one_targets=true
+require('leap').opts.safe_labels = {}
+vim.keymap.set({'x', 'o', 'n'}, 'f', '<Plug>(leap-forward-to)')
+vim.keymap.set({'x', 'o', 'n'}, 'F', '<Plug>(leap-backward-to)')
+
+
+vim.o.background = 'dark'
+local c = require'vscode.colors'
+
+require'vscode'.setup{
+    transparent = true,
+    italic_comments = true,
+    disable_nvimtree_bg = true,
+    color_overrides = {
+        vscLineNumber = '#5C5C5C',
+    },
+    group_overrides = {
+        Cursor = { fg=c.vscDarkBlue, bg=c.vscLightGreen, bold=true },
+    }
+}
+--[[
+require('onedark').setup  {
+    -- Main options --
+    style = 'warmer', -- Default theme style. Choose between 'dark', 'darker', 'cool', 'deep', 'warm', 'warmer' and 'light'
+    transparent = true,  -- Show/hide background
+    term_colors = true, -- Change terminal color as per the selected theme style
+    ending_tildes = false, -- Show the end-of-buffer tildes. By default they are hidden
+    cmp_itemkind_reverse = false, -- reverse item kind highlights in cmp menu
+
+    -- toggle theme style ---
+    toggle_style_key = nil, -- keybind to toggle theme style. Leave it nil to disable it, or set it to a string, for example "<leader>ts"
+    toggle_style_list = {'dark', 'darker', 'cool', 'deep', 'warm', 'warmer', 'light'}, -- List of styles to toggle between
+
+    -- Change code style ---
+    -- Options are italic, bold, underline, none
+    -- You can configure multiple style with comma seperated, For e.g., keywords = 'italic,bold'
+    code_style = {
+        comments = 'italic',
+        keywords = 'none',
+        functions = 'none',
+        strings = 'none',
+        variables = 'none'
+    },
+
+    -- Lualine options --
+    lualine = {
+        transparent = false, -- lualine center bar transparency
+    },
+
+    -- Custom Highlights --
+    colors = {}, -- Override default colors
+    highlights = {}, -- Override highlight groups
+
+    -- Plugins Config --
+    diagnostics = {
+        darker = true, -- darker colors for diagnostic
+        undercurl = true,   -- use undercurl instead of underline for diagnostics
+        background = true,    -- use background color for virtual text
+    },
+}
+]]
+
+
+require("tokyonight").setup({
+  -- your configuration comes here
+  -- or leave it empty to use the default settings
+  style = "storm", -- The theme comes in three styles, `storm`, `moon`, a darker variant `night` and `day`
+  light_style = "day", -- The theme is used when the background is set to light
+  transparent = true, -- Enable this to disable setting the background color
+  terminal_colors = true, -- Configure the colors used when opening a `:terminal` in Neovim
+  styles = {
+    -- Style to be applied to different syntax groups
+    -- Value is any valid attr-list value for `:help nvim_set_hl`
+    comments = { italic = true },
+    keywords = { italic = true },
+    functions = {},
+    variables = {},
+    -- Background styles. Can be "dark", "transparent" or "normal"
+    sidebars = "dark", -- style for sidebars, see below
+    floats = "dark", -- style for floating windows
+  },
+  sidebars = { "qf", "help" }, -- Set a darker background on sidebar-like windows. For example: `["qf", "vista_kind", "terminal", "packer"]`
+  day_brightness = 0.3, -- Adjusts the brightness of the colors of the **Day** style. Number between 0 and 1, from dull to vibrant colors
+  hide_inactive_statusline = false, -- Enabling this option, will hide inactive statuslines and replace them with a thin border instead. Should work with the standard **StatusLine** and **LuaLine**.
+  dim_inactive = false, -- dims inactive windows
+  lualine_bold = false, -- When `true`, section headers in the lualine theme will be bold
+
+  --- You can override specific color groups to use other groups or a hex color
+  --- function will be called with a ColorScheme table
+  ---@param colors ColorScheme
+  on_colors = function(colors) end,
+
+  --- You can override specific highlights to use other groups or a hex color
+  --- function will be called with a Highlights and ColorScheme table
+  ---@param highlights Highlights
+  ---@param colors ColorScheme
+  on_highlights = function(highlights, colors) end,
+})
+
+
+
+require'nvim-treesitter.configs'.setup {
+  ensure_installed = {"c","cpp","java","python","rust","javascript"},
+  highlight = {
+    enable = true,
+    additional_vim_regex_highlighting = false
+  },
+  incremental_selection = {
+    enable = true,
+    keymaps = {
+      init_selection = '<CR>',
+      node_incremental = '<CR>',
+      node_decremental = '<BS>',
+      scope_incremental = '<TAB>',
+    }
+  },
+}
+vim.wo.foldmethod = 'expr'
+vim.wo.foldexpr = 'nvim_treesitter#foldexpr()'
+vim.wo.foldlevel = 99
+
+EOF
+
+"=======================================================================================================
+" highlight Config
+exec "hi CocMenuSel ctermbg=237 guibg=#13354A"
+exec "lua require('leap').init_highlight(true)"
+
+"=======================================================================================================
+" coc-translator
+nmap <Leader>t <Plug>(coc-translator-p)
+vmap <Leader>t <Plug>(coc-translator-pv)
